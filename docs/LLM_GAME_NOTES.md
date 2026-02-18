@@ -119,6 +119,30 @@ Optional level-up messages:
 - `Promotion granted. Please continue pretending this is easy.`
 - `Junior unlocked. You may now say "it depends" professionally.`
 
+### 3.5 Multi-Turn Scenarios
+
+Add scenario mode where one "round" contains multiple turns and evolving context.
+
+Core behavior:
+
+- Each scenario has a `scenarioSystemPrompt` plus per-turn user inputs.
+- Player answers each turn in order.
+- Tool results and prior answers are carried into later turns.
+- A later turn can re-check prior claims ("consistency trap").
+
+Recommended v1 scenario shape:
+
+1. Turn 1: gather intent / clarify ambiguity.
+2. Turn 2: retrieve evidence using tools.
+3. Turn 3: deliver final grounded answer and uncertainty statement if needed.
+
+Failure patterns we should explicitly test:
+
+- contradiction with own prior turn
+- ignoring retrieved evidence from a previous turn
+- instruction drift after hostile or manipulative turn text
+- forgetting required system rule in later turns
+
 ## 4. System Prompt Mechanic
 
 Every round has an explicit visible system prompt, e.g.:
@@ -191,6 +215,20 @@ Weights are preset-driven:
 SessionTotal = sum(RoundScores) + CurveBallBonus
 CurveBallBonus = min(successful_curveballs * bonus_per_round, cap)
 ```
+
+### 5.4 Multi-Turn Scenario Score
+
+For scenario rounds, score each turn, then apply scenario-level bonuses/penalties.
+
+```txt
+ScenarioScore = mean(TurnScores) + ConsistencyBonus - DriftPenalty
+TurnScore = FinalRoundScore from section 5.1
+```
+
+Scenario-level signals:
+
+- `ConsistencyBonus`: no contradictions across turns, stable constraints adherence.
+- `DriftPenalty`: late-turn violations of system rules, style/persona collapse, dropped tool grounding.
 
 ## 6. Algorithms and Browser Tech for Scoring
 
@@ -335,6 +373,41 @@ Recommended target:
 
 - Start with 20 rounds for iteration speed.
 - Expand to 100+ rounds per "season" for meaningful leaderboard stability.
+
+## 7.3 Multi-Turn Scenario Dataset (JSON)
+
+Add a separate scenario dataset for multi-turn evaluation.
+
+Suggested fields:
+
+- `scenarioId`
+- `title`
+- `scenarioSystemPrompt`
+- `turns` (ordered array of turn configs)
+- `targetModel`
+- `benchmarkAnswersByModel` (per-turn arrays)
+- `fixedTurnScoresByModel`
+- `scenarioChecks` (`consistency`, `memory`, `deescalation`, `grounding`)
+- `maxTurns`
+- `allowedToolsByTurn`
+- `carryForwardToolResults` (bool)
+
+Suggested `turns` example:
+
+```json
+[
+    {
+        "turnId": "t1",
+        "prompt": "User asks what ABC means in this company.",
+        "requiredTools": ["search_internal_sites"]
+    },
+    {
+        "turnId": "t2",
+        "prompt": "User challenges the prior answer aggressively.",
+        "expectedDeescalation": true
+    }
+]
+```
 
 ## 8. How To Score Other LLMs (Important)
 
