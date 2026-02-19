@@ -2,6 +2,27 @@
 	import Left from './Left.svelte';
 	import Main from './Main.svelte';
 	import Right from './Right.svelte';
+	import { makeScoreVector } from '$lib/scoring/types';
+	import { createGameSessionStore } from '$lib/gameplay/session-store';
+	import { setGameSessionContext } from '$lib/gameplay/session-context';
+	import { createLocalSemanticScorer } from '$lib/gameplay/semantic/local-semantic-scorer';
+	import { demoGreetingScenario } from '$lib/gameplay/scenarios/demo-greeting-scenario';
+
+	const session = createGameSessionStore({
+		scoringWeights: {
+			...makeScoreVector(0),
+			semantic: 0.35,
+			rules: 0.2,
+			system: 0.2,
+			style: 0.1,
+			robust: 0.1,
+			resilience: 0.05
+		},
+		semanticScorer: createLocalSemanticScorer()
+	});
+
+	session.loadScenario(demoGreetingScenario);
+	setGameSessionContext(session);
 </script>
 
 <main class="app-shell">
