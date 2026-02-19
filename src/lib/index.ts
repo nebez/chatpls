@@ -1,2 +1,2 @@
-export * from './scoring/types';
-export * from './scoring/round-score';
+// Intentionally left without barrel exports.
+// Import modules directly from their paths under `$lib/...`.

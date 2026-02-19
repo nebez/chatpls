@@ -13,6 +13,7 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
+		"test:hf": "RUN_EMBEDDING_INTEGRATION=1 vitest --project server --run src/lib/gameplay/single-turn-greeting.hf.spec.ts",
 		"test": "npm run test:unit -- --run"
 	},
 	"devDependencies": {
@@ -37,5 +38,8 @@
 		"vite": "^7.3.1",
 		"vitest": "^4.0.18",
 		"vitest-browser-svelte": "^2.0.2"
+	},
+	"dependencies": {
+		"@huggingface/transformers": "^3.8.1"
 	}
 }

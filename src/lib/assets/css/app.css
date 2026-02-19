@@ -12,8 +12,11 @@
     --bg-color: #F0F0F0;
     --fg-color: #1F2328;
 
-    --app-container-stroke-color: #464646;
-    --app-container-drop-shadow: 5px 5px 0 #626262;
+    --app-panel-bg-color: #fff;
+    --app-panel-stroke-color: #464646;
+    --app-panel-drop-shadow: 5px 5px 0 #626262;
+
+    --gray-500: #8E8E8E;
 }
 
 :root[data-theme='light'] {

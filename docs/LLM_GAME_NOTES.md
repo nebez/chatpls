@@ -143,6 +143,35 @@ Failure patterns we should explicitly test:
 - instruction drift after hostile or manipulative turn text
 - forgetting required system rule in later turns
 
+### 3.6 Conditional Turn Branching
+
+Add ordered transition rules between turns so scenarios can react to player quality.
+
+Design rule:
+
+- Transitions are evaluated in order, first matching rule wins.
+- Always include a fallback transition (`always`) to avoid dead ends.
+
+Useful branch signals for v1:
+
+- turn score thresholds (`turn_score_below`, `turn_score_at_least`)
+- tool usage checks (`required_tool_used`, `required_tool_not_used`)
+- semantic quality checks (`semantic_below`)
+
+Example branch pattern for acronym rounds:
+
+1. User asks: `What does ABC mean?`
+2. If first answer quality is low, route to challenge turn:
+    - `That's wrong. Are you sure?`
+3. If answer quality is acceptable, route to concise follow-up:
+    - `Can you give the final one-sentence definition?`
+4. End on a final grounded answer turn.
+
+Where embedding helps:
+
+- Use semantic similarity as one routing signal (for example `semantic_below: 0.6`) to decide whether to trigger corrective pushback turns.
+- Keep routing deterministic by using fixed thresholds in scenario config.
+
 ## 4. System Prompt Mechanic
 
 Every round has an explicit visible system prompt, e.g.:
@@ -449,6 +478,35 @@ Conclusion:
 - Do **not** use random numbers beyond temporary placeholders.
 - Yes, running tests manually in browser and storing answers is a good path.
 - Yes, a CSV with ~100 answers per model is a practical format; then import and score with our function.
+
+### 8.3 Manual Scoring Recipe (Single-Turn, Same Pipeline as Player)
+
+For early validation, score model outputs with the exact same function used for player answers.
+
+Current local flow:
+
+1. Collect one response from each target model for the same prompt:
+    - `gpt-5.2`
+    - `sonnet-4.5`
+    - `nova-2.0`
+2. Copy `src/lib/gameplay/single-turn-greeting.responses.example.json` to `src/lib/gameplay/single-turn-greeting.responses.local.json`.
+3. Paste each model response into that local file.
+4. Run the same single-turn HF spec.
+5. Record:
+    - `score`
+    - `componentScores`
+    - `endState`
+
+Important guarantee:
+
+- If a model response string is passed as `playerAnswer`, it is scored by the same code path as a human response string.
+- This keeps benchmark comparisons fair for this use-case.
+
+Run command:
+
+```sh
+pnpm test:hf
+```
 
 ## 9. Suggested CSV Format
 
