@@ -1,0 +1,52 @@
+@import './resets.css';
+
+:root {
+    color-scheme: light dark;
+
+    /* typography vars */
+    --font-family: monospace;
+    --font-size: 16px;
+    --line-height: 19px;
+
+    /* global page vars */
+    --bg-color: #F0F0F0;
+    --fg-color: #1F2328;
+
+    --app-container-stroke-color: #464646;
+    --app-container-drop-shadow: 5px 5px 0 #626262;
+}
+
+:root[data-theme='light'] {
+    color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+    color-scheme: dark;
+    /* don't color dark mode yet, we'll focus exclusively on light for now */
+}
+
+html {
+    background-color: var(--bg-color);
+    color: var(--fg-color);
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    word-break: break-word;
+    margin: 0;
+    padding: 0;
+}
+
+li,
+table,
+p {
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+    font-weight: 400;
+    font-style: normal;
+    margin: 0;
+}
