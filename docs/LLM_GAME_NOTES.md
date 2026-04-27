@@ -1,5 +1,8 @@
 # LLM Parody Game Plan (Browser-Only)
 
+Scenario ladder, teaching goals, and the one-hour implementation cadence are tracked separately in
+[`SCENARIO_ROADMAP.md`](./SCENARIO_ROADMAP.md).
+
 ## 1. Product Goal
 
 Build a fun, parody-style benchmark game where a human player answers prompts and gets scored against fixed responses from popular LLMs.
@@ -162,9 +165,9 @@ Example branch pattern for acronym rounds:
 
 1. User asks: `What does ABC mean?`
 2. If first answer quality is low, route to challenge turn:
-    - `That's wrong. Are you sure?`
+   - `That's wrong. Are you sure?`
 3. If answer quality is acceptable, route to concise follow-up:
-    - `Can you give the final one-sentence definition?`
+   - `Can you give the final one-sentence definition?`
 4. End on a final grounded answer turn.
 
 Where embedding helps:
@@ -229,7 +232,7 @@ Weights are preset-driven:
 
 - `S_semantic`: cosine similarity between user answer embedding and target model benchmark answer embedding.
 - `S_contrast`: preference for target model style over other models:
-    - `S_contrast = clamp01((sim_target - mean(sim_others) + 1) / 2)`
+  - `S_contrast = clamp01((sim_target - mean(sim_others) + 1) / 2)`
 - `S_rules`: prompt constraint compliance (word count, emoji requirement, no-letter rules, etc.).
 - `S_system`: system prompt compliance (English-only, max words, abstain behavior, no fake citations, date consistency).
 - `S_facts`: fact-check score from retrieved evidence and simple claim checks.
@@ -292,9 +295,9 @@ Current approach (browser-only):
 2. Extract keywords from prompt.
 3. Search local evidence snippets (keyword overlap ranking).
 4. Build fact checks:
-    - date/year match check
-    - evidence overlap check
-    - abstention-required checks for nonsense/unknowable prompts
+   - date/year match check
+   - evidence overlap check
+   - abstention-required checks for nonsense/unknowable prompts
 
 Future upgrade:
 
@@ -309,9 +312,9 @@ Planned tool behavior:
 - Input: keyword list.
 - Output: ranked internal snippets + source IDs.
 - Use cases:
-    - acronym disambiguation (`ABC`)
-    - company/process terms
-    - policy lookup rounds
+  - acronym disambiguation (`ABC`)
+  - company/process terms
+  - policy lookup rounds
 
 Tool-use scoring signals:
 
@@ -389,10 +392,10 @@ Suggested `toolCallSpec` example:
 
 ```json
 {
-    "tool": "search_internal_sites",
-    "required": true,
-    "expectedKeywords": ["abc", "policy"],
-    "minKeywordCount": 2
+	"tool": "search_internal_sites",
+	"required": true,
+	"expectedKeywords": ["abc", "policy"],
+	"minKeywordCount": 2
 }
 ```
 
@@ -425,16 +428,16 @@ Suggested `turns` example:
 
 ```json
 [
-    {
-        "turnId": "t1",
-        "prompt": "User asks what ABC means in this company.",
-        "requiredTools": ["search_internal_sites"]
-    },
-    {
-        "turnId": "t2",
-        "prompt": "User challenges the prior answer aggressively.",
-        "expectedDeescalation": true
-    }
+	{
+		"turnId": "t1",
+		"prompt": "User asks what ABC means in this company.",
+		"requiredTools": ["search_internal_sites"]
+	},
+	{
+		"turnId": "t2",
+		"prompt": "User challenges the prior answer aggressively.",
+		"expectedDeescalation": true
+	}
 ]
 ```
 
@@ -486,16 +489,16 @@ For early validation, score model outputs with the exact same function used for 
 Current local flow:
 
 1. Collect one response from each target model for the same prompt:
-    - `gpt-5.2`
-    - `sonnet-4.5`
-    - `nova-2.0`
+   - `gpt-5.2`
+   - `sonnet-4.5`
+   - `nova-2.0`
 2. Copy `src/lib/gameplay/single-turn-greeting.responses.example.json` to `src/lib/gameplay/single-turn-greeting.responses.local.json`.
 3. Paste each model response into that local file.
 4. Run the same single-turn HF spec.
 5. Record:
-    - `score`
-    - `componentScores`
-    - `endState`
+   - `score`
+   - `componentScores`
+   - `endState`
 
 Important guarantee:
 
@@ -539,40 +542,40 @@ These are model options to evaluate later. Keep all in consideration until we ru
 ### Embedding candidates
 
 1. `mixedbread-ai/mxbai-embed-large-v1`
-    - URL: `https://huggingface.co/mixedbread-ai/mxbai-embed-large-v1`
-    - Use: high-quality semantic similarity baseline.
-    - Risk: likely heavier for browser runtime and download size.
+   - URL: `https://huggingface.co/mixedbread-ai/mxbai-embed-large-v1`
+   - Use: high-quality semantic similarity baseline.
+   - Risk: likely heavier for browser runtime and download size.
 
 2. `mixedbread-ai/mxbai-embed-xsmall-v1`
-    - URL: `https://huggingface.co/mixedbread-ai/mxbai-embed-xsmall-v1`
-    - Use: lightweight/faster embedding option.
-    - Risk: may trade off accuracy for speed.
+   - URL: `https://huggingface.co/mixedbread-ai/mxbai-embed-xsmall-v1`
+   - Use: lightweight/faster embedding option.
+   - Risk: may trade off accuracy for speed.
 
 3. `Snowflake/snowflake-arctic-embed-m-v2.0`
-    - URL: `https://huggingface.co/Snowflake/snowflake-arctic-embed-m-v2.0`
-    - Use: strong embedding candidate for retrieval and semantic scoring.
-    - Risk: compatibility/performance in browser must be validated.
+   - URL: `https://huggingface.co/Snowflake/snowflake-arctic-embed-m-v2.0`
+   - Use: strong embedding candidate for retrieval and semantic scoring.
+   - Risk: compatibility/performance in browser must be validated.
 
 4. `Xenova/all-MiniLM-L6-v2`
-    - URL: `https://huggingface.co/Xenova/all-MiniLM-L6-v2`
-    - Use: practical default baseline for browser embeddings.
-    - Risk: lower ceiling vs newer/larger embedding models.
+   - URL: `https://huggingface.co/Xenova/all-MiniLM-L6-v2`
+   - Use: practical default baseline for browser embeddings.
+   - Risk: lower ceiling vs newer/larger embedding models.
 
 ### Instruction model candidate
 
 5. `HuggingFaceTB/SmolLM2-135M-Instruct`
-    - URL: `https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct`
-    - Use: potential local instruction-style model for simulation/roleplay tasks.
-    - Note: this is not an embedding model; evaluate separately from similarity backbone.
+   - URL: `https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct`
+   - Use: potential local instruction-style model for simulation/roleplay tasks.
+   - Note: this is not an embedding model; evaluate separately from similarity backbone.
 
 ### Selection plan (to decide later)
 
 - Run the same round set against each embedding candidate.
 - Track:
-    - scoring quality stability
-    - latency (cold/warm run)
-    - model download size + cache behavior
-    - browser compatibility (WASM/WebGPU fallback behavior)
+  - scoring quality stability
+  - latency (cold/warm run)
+  - model download size + cache behavior
+  - browser compatibility (WASM/WebGPU fallback behavior)
 - Choose one default model and keep one fast fallback.
 
 ## 11. Milestones (Planning-First)
@@ -601,8 +604,8 @@ When moving this into a fresh SvelteKit repo, implement in this order:
 2. Add scoring core (rules/system/facts/session math) with unit-testable pure functions.
 3. Add embedding pipeline (browser-only) and cosine similarity integration.
 4. Add tool invocation layer:
-    - easy mode (UI-assisted tool calls)
-    - hard mode (typed tool-call syntax)
+   - easy mode (UI-assisted tool calls)
+   - hard mode (typed tool-call syntax)
 5. Add benchmark workflow support (CSV/JSON import + fixed-score generation).
 6. Add leaderboard/session summary and score-mode toggle (`fixed`, `dynamic`, `hybrid`).
 7. Add offline/cache pass (model cache + dataset cache behavior checks).

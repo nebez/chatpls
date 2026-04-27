@@ -13,9 +13,10 @@ This document captures how we are building this project together so changes stay
 
 We are currently focusing on:
 
-1. A minimal, testable game loop for one single-turn scenario.
+1. A minimal, testable game loop for executable level scenarios.
 2. Clear seams so UI can wire in later without refactoring core logic.
 3. Real-model verification via optional Hugging Face integration tests.
+4. A scenario ladder that teaches LLM concepts through play; see `docs/SCENARIO_ROADMAP.md`.
 
 ## 3. Architecture Snapshot
 
@@ -39,6 +40,15 @@ These remain pure and unit-testable.
 - `src/lib/gameplay/semantic/hf-semantic-scorer.ts`
   - Real semantic scorer backed by `@huggingface/transformers`.
 
+### Level scenarios
+
+- `src/lib/levels/types.ts`
+  - Defines scenario turns, branching conditions, tool requirements, and evidence snippets.
+- `src/lib/gameplay/run-level-scenario.ts`
+  - Runs multi-turn scenarios with deterministic transitions, tool results, and score components.
+- `src/lib/gameplay/tools/*`
+  - Browser-safe tool runtimes behind small interfaces.
+
 ## 4. Test Strategy
 
 ### Fast contract tests (always-on)
@@ -47,6 +57,9 @@ These remain pure and unit-testable.
   - Uses fixed semantic scorer stub.
   - Validates end-state, transcript shape, and scoring behavior.
   - Includes conflict-policy test (`system_over_user` vs `user_over_system`).
+- `src/lib/gameplay/run-level-scenario.spec.ts`
+  - Uses fixed semantic scorer stub.
+  - Validates branching, tool use, fact scoring, and paused scenario state.
 
 ### Optional real-model integration
 
@@ -74,7 +87,7 @@ To score model outputs exactly like user responses:
 
 1. Copy:
    - `src/lib/gameplay/single-turn-greeting.responses.example.json`
-   to
+     to
    - `src/lib/gameplay/single-turn-greeting.responses.local.json`
 2. Paste responses for:
    - `gpt-5.2`

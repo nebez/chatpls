@@ -31,11 +31,21 @@ export interface ScenarioTransition {
 export interface ScenarioTurn {
 	id: string;
 	prompt: string;
+	benchmarkAnswer?: string;
+	expectedFacts?: string[];
+	forbiddenFacts?: string[];
 	requiredTools?: ToolName[];
 	allowedTools?: ToolName[];
 	expectedBehavior?: string;
 	transitions?: ScenarioTransition[];
 	terminal?: boolean;
+}
+
+export interface InternalSearchDocument {
+	id: string;
+	title: string;
+	body: string;
+	keywords?: string[];
 }
 
 export interface LevelScenario {
@@ -47,4 +57,5 @@ export interface LevelScenario {
 	scoringPreset: ScorePreset;
 	entryTurnId: string;
 	turns: ScenarioTurn[];
+	internalSearchDocuments?: InternalSearchDocument[];
 }
