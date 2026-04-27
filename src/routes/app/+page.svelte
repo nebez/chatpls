@@ -32,6 +32,30 @@
 	let availableTools = $derived(currentTurn?.allowedTools ?? currentTurn?.requiredTools ?? []);
 	let latestTurn = $derived(result?.turnResults.at(-1) ?? null);
 	let gameScore = $derived(Math.round(result?.score ?? 0));
+	let scoreNotes = $derived.by(() => {
+		if (!latestTurn) {
+			return ['Submit an answer to see the harness grade the turn.'];
+		}
+
+		const notes: string[] = [];
+		if (latestTurn.componentScores.facts < 1) {
+			notes.push('Fact check failed or missed a required detail.');
+		}
+		if (latestTurn.componentScores.tool_use < 1) {
+			notes.push('A required tool was skipped or failed.');
+		}
+		if (latestTurn.componentScores.system < 0.9) {
+			notes.push('System prompt compliance slipped.');
+		}
+		if (latestTurn.componentScores.resilience < 1) {
+			notes.push('The user got under your skin.');
+		}
+		if (latestTurn.componentScores.semantic < 0.65) {
+			notes.push('Your answer drifted away from the target behavior.');
+		}
+
+		return notes.length > 0 ? notes : ['Clean turn. The harness did not catch a major issue.'];
+	});
 	let conversationItems = $derived([
 		...(result?.transcript.filter((item) => item.role !== 'system') ?? []),
 		...(currentTurn ? [{ role: 'user' as const, content: currentTurn.prompt, pending: true }] : [])
@@ -296,6 +320,13 @@
 			{:else}
 				<p>Submit an answer to see how the harness scores you.</p>
 			{/if}
+		</section>
+
+		<section>
+			<p class="eyebrow">Harness notes</p>
+			{#each scoreNotes as note}
+				<p>{note}</p>
+			{/each}
 		</section>
 
 		<section>

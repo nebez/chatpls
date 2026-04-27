@@ -13,6 +13,7 @@ describe('/app/+page.svelte', () => {
 		await expect.element(page.getByText('Game stats')).toBeInTheDocument();
 		await expect.element(page.getByText('Browser model stats')).toBeInTheDocument();
 		await expect.element(page.getByText('Model leaderboard')).toBeInTheDocument();
+		await expect.element(page.getByText('Harness notes')).toBeInTheDocument();
 		await expect.element(page.getByRole('link', { name: 'Help' })).toBeInTheDocument();
 		await expect.element(page.getByRole('button', { name: 'Submit' })).toBeInTheDocument();
 	});
@@ -35,5 +36,6 @@ describe('/app/+page.svelte', () => {
 		expect(conversationItems[0]).toContain("How many r's are in strawberry?");
 		expect(conversationItems[1]).toContain("There are 3 r's in strawberry.");
 		expect(conversationItems[2]).toContain("Nope. You're wrong.");
+		await expect.element(page.getByText(/Clean turn/i)).toBeInTheDocument();
 	});
 });
