@@ -31,6 +31,10 @@
 	let availableTools = $derived(currentTurn?.allowedTools ?? currentTurn?.requiredTools ?? []);
 	let latestTurn = $derived(result?.turnResults.at(-1) ?? null);
 	let gameScore = $derived(Math.round(result?.score ?? 0));
+	let conversationItems = $derived([
+		...(result?.transcript.filter((item) => item.role !== 'system') ?? []),
+		...(currentTurn ? [{ role: 'user' as const, content: currentTurn.prompt, pending: true }] : [])
+	]);
 	let contextRemaining = $derived(
 		Math.max(
 			0,
@@ -81,8 +85,7 @@
 		return 'Classic failure mode. Check facts, tools, and instruction hierarchy.';
 	}
 
-	async function submitAnswer(event: SubmitEvent): Promise<void> {
-		event.preventDefault();
+	async function submitCurrentAnswer(): Promise<void> {
 		const trimmedAnswer = answer.trim();
 
 		if (!trimmedAnswer || !currentTurn || isScoring) {
@@ -119,6 +122,20 @@
 		} finally {
 			isScoring = false;
 		}
+	}
+
+	async function submitAnswer(event: SubmitEvent): Promise<void> {
+		event.preventDefault();
+		await submitCurrentAnswer();
+	}
+
+	function submitOnEnter(event: KeyboardEvent): void {
+		if (event.key !== 'Enter' || event.shiftKey) {
+			return;
+		}
+
+		event.preventDefault();
+		void submitCurrentAnswer();
 	}
 </script>
 
@@ -175,25 +192,20 @@
 			<pre>{scenario.systemPrompt}</pre>
 		</section>
 
-		<section class="prompt-block" aria-label="Current user prompt">
-			<p class="eyebrow">User</p>
-			{#if currentTurn}
-				<p>{currentTurn.prompt}</p>
-			{:else}
-				<p>Scenario complete. Reset or pick another conversation.</p>
+		<section class="transcript" aria-label="Conversation">
+			{#each conversationItems as item}
+				<article class={[item.role, 'pending' in item && item.pending ? 'pending' : '']}>
+					<p class="eyebrow">{item.role}{'pending' in item && item.pending ? ' turn' : ''}</p>
+					<p>{item.content}</p>
+				</article>
+			{/each}
+			{#if !currentTurn}
+				<article class="complete">
+					<p class="eyebrow">scenario</p>
+					<p>Scenario complete. Reset or pick another conversation.</p>
+				</article>
 			{/if}
 		</section>
-
-		{#if result?.transcript.length}
-			<section class="transcript" aria-label="Transcript">
-				{#each result.transcript.filter((item) => item.role !== 'system') as item}
-					<article class={item.role}>
-						<p class="eyebrow">{item.role}</p>
-						<p>{item.content}</p>
-					</article>
-				{/each}
-			</section>
-		{/if}
 
 		<form class="answer-form" onsubmit={submitAnswer}>
 			{#if currentTurn && availableTools.length > 0}
@@ -217,6 +229,7 @@
 					disabled={!currentTurn || isScoring}
 					placeholder="Answer like the harness is watching."
 					rows="4"
+					onkeydown={submitOnEnter}
 				></textarea>
 			</label>
 
@@ -417,7 +430,6 @@
 		margin: 0;
 	}
 
-	.prompt-block,
 	.tool-box,
 	.transcript article {
 		border: 1px solid #d2d2d2;
@@ -435,6 +447,15 @@
 
 	.transcript .tool {
 		background: #f4fbf4;
+	}
+
+	.transcript .pending {
+		border-color: var(--app-panel-stroke-color);
+		background: #fff;
+	}
+
+	.transcript .complete {
+		background: #f4f4f4;
 	}
 
 	.answer-form {

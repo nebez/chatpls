@@ -80,7 +80,12 @@ function scoreFactChecks(
 
 	if (expectedFacts && expectedFacts.length > 0) {
 		const matchedCount = expectedFacts.filter((term) => includesTerm(answer, term)).length;
-		scores.push(matchedCount / expectedFacts.length);
+		const expectedScore = matchedCount / expectedFacts.length;
+		if (expectedScore < 1) {
+			return expectedScore;
+		}
+
+		scores.push(expectedScore);
 	}
 
 	if (forbiddenFacts && forbiddenFacts.length > 0) {
