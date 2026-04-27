@@ -46,6 +46,17 @@
 			<li><strong>Grounding:</strong> sources and tool results beat confident vibes.</li>
 		</ul>
 
+		<h2>Tool Calls</h2>
+		<p>
+			Some rounds show an easy tool form. Hard mode uses the same underlying runtime with typed
+			calls, for example:
+		</p>
+		<pre>/tool search_internal_sites {'{"query":"ABC finance"}'}</pre>
+		<p>
+			The tool result becomes part of the same conversation context. Your final answer is scored on
+			whether you used that result instead of guessing.
+		</p>
+
 		<h2>How Scoring Works</h2>
 		<p>
 			Each turn gets component scores: semantic match, facts, tool use, system compliance, and
@@ -101,10 +112,18 @@
 	}
 
 	p,
-	li {
+	li,
+	pre {
 		color: #58606f;
 		font-size: 18px;
 		line-height: 1.5;
+	}
+
+	pre {
+		border: 1px solid var(--app-panel-stroke-color);
+		background: #f1f1f1;
+		padding: 14px;
+		overflow: auto;
 	}
 
 	ul {

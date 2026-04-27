@@ -4,6 +4,7 @@
 	import { runLevelScenario, type LevelScenarioRunResult } from '$lib/gameplay/run-level-scenario';
 	import { createLocalSemanticScorer } from '$lib/gameplay/semantic/local-semantic-scorer';
 	import type { LevelScenarioPlayerTurnInput } from '$lib/gameplay/run-level-scenario';
+	import { parseToolCallsFromAnswer } from '$lib/gameplay/tools/parse-tool-calls';
 	import type { ToolName } from '$lib/levels/types';
 	import { levelScenarios } from '$lib/levels/scenarios';
 
@@ -86,15 +87,26 @@
 	}
 
 	async function submitCurrentAnswer(): Promise<void> {
-		const trimmedAnswer = answer.trim();
+		const parsedAnswer = parseToolCallsFromAnswer(answer);
+		const trimmedAnswer = parsedAnswer.answerText || answer.trim();
 
 		if (!trimmedAnswer || !currentTurn || isScoring) {
 			return;
 		}
 
+		if (parsedAnswer.errors.length > 0) {
+			errorMessage = parsedAnswer.errors.join(' ');
+			return;
+		}
+
 		const turnInput: LevelScenarioPlayerTurnInput = { answer: trimmedAnswer };
+		if (parsedAnswer.toolCalls.length > 0) {
+			turnInput.toolCalls = parsedAnswer.toolCalls;
+		}
+
 		if (hasTool('search_internal_sites') && toolQuery.trim()) {
 			turnInput.toolCalls = [
+				...(turnInput.toolCalls ?? []),
 				{
 					name: 'search_internal_sites',
 					args: { query: toolQuery.trim() }
@@ -216,6 +228,10 @@
 							search_internal_sites query
 							<input bind:value={toolQuery} placeholder="try: ABC finance" autocomplete="off" />
 						</label>
+						<p class="tool-hint">
+							Hard mode:
+							<code>/tool search_internal_sites {'{"query":"ABC finance"}'}</code>
+						</p>
 					{:else}
 						<p>{availableTools.join(', ')}</p>
 					{/if}
@@ -483,6 +499,17 @@
 	textarea {
 		resize: vertical;
 		min-block-size: 110px;
+	}
+
+	code {
+		background: #eee;
+		padding: 2px 4px;
+	}
+
+	.tool-hint {
+		color: #58606f;
+		font-size: 14px;
+		line-height: 1.35;
 	}
 
 	.form-actions {
