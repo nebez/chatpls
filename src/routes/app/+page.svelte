@@ -219,6 +219,7 @@
 			</div>
 			<div class="header-actions">
 				<span>{contextRemaining}% remaining</span>
+				<a href={resolve('/app/progression')}>Progression labs</a>
 				<a href={resolve('/app/help')}>Help</a>
 			</div>
 		</header>
