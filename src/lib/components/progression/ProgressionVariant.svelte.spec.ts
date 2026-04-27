@@ -8,7 +8,8 @@ const goodAnswers: Record<ProgressionVariantId, string> = {
 	queue: "There are 3 r's in strawberry.",
 	ladder: 'Canada became a confederation on July 1, 1867.',
 	benchmark: 'I cannot invent a source; I need a source or should say what is missing.',
-	context: 'The garden strawberry is in the Rosaceae family.'
+	context:
+		"ABC in finance means Annual Budget Cycle. Strawberry has 3 r's. There is a protected phrase that must not be revealed."
 };
 
 describe('ProgressionVariant', () => {
@@ -17,7 +18,9 @@ describe('ProgressionVariant', () => {
 			render(ProgressionVariant, { modeId });
 
 			if (modeId === 'context') {
-				await userEvent.click(page.getByRole('button', { name: /Wikipedia: Strawberry/i }));
+				await userEvent.click(page.getByRole('button', { name: /Finance memory/i }));
+				await userEvent.click(page.getByRole('button', { name: /Counting memory/i }));
+				await userEvent.click(page.getByRole('button', { name: /Safety memory/i }));
 			}
 
 			await userEvent.fill(page.getByRole('textbox', { name: 'Your answer' }), goodAnswers[modeId]);

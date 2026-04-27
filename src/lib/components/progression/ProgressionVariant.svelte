@@ -60,14 +60,22 @@
 				? 1
 				: step.forbiddenTerms.filter((term: string) => !includesTerm(answer, term)).length /
 					step.forbiddenTerms.length;
-		const relevantSnippets =
-			step.contextSnippets?.filter((snippet: ContextSnippet) => snippet.relevant) ?? [];
-		const snippetScore =
+		const snippets = step.contextSnippets ?? [];
+		const relevantSnippets = snippets.filter((snippet: ContextSnippet) => snippet.relevant);
+		const distractorSnippets = snippets.filter((snippet: ContextSnippet) => !snippet.relevant);
+		const relevantSnippetScore =
 			relevantSnippets.length === 0
 				? 1
-				: relevantSnippets.every((snippet: ContextSnippet) => keptSnippetIds.includes(snippet.id))
-					? 1
-					: 0.35;
+				: relevantSnippets.filter((snippet: ContextSnippet) => keptSnippetIds.includes(snippet.id))
+						.length / relevantSnippets.length;
+		const distractorSnippetScore =
+			distractorSnippets.length === 0
+				? 1
+				: distractorSnippets.filter(
+						(snippet: ContextSnippet) => !keptSnippetIds.includes(snippet.id)
+					).length / distractorSnippets.length;
+		const snippetScore =
+			snippets.length === 0 ? 1 : relevantSnippetScore * 0.65 + distractorSnippetScore * 0.35;
 		const toolScore =
 			step.prompt.toLowerCase().includes('tool') || step.prompt.toLowerCase().includes('wikipedia')
 				? answer.includes('/tool') || answer.toLowerCase().includes('wikipedia')
@@ -85,7 +93,7 @@
 			return { score, note: 'You repeated a forbidden distractor or leaked protected context.' };
 		}
 		if (snippetScore < 1) {
-			return { score, note: 'The context window did not include the useful evidence.' };
+			return { score, note: 'The compaction pass kept or dropped the wrong context.' };
 		}
 		if (toolScore < 1) {
 			return { score, note: 'The round expected tool-shaped behavior.' };
@@ -138,8 +146,8 @@
 		<a href={resolve('/')} class="brand"><Logo /></a>
 		<section>
 			<p class="eyebrow">Progression labs</p>
-			{#each progressionVariants as item}
-				<a class:active={item.id === variant.id} href={item.path}>{item.title}</a>
+			{#each progressionVariants as item (item.id)}
+				<a class:active={item.id === variant.id} href={resolve(item.path)}>{item.title}</a>
 			{/each}
 		</section>
 		<section>
@@ -166,7 +174,7 @@
 
 		{#if variant.id === 'ladder'}
 			<section class="ladder" aria-label="Skill ladder">
-				{#each variant.levelNames as level, index}
+				{#each variant.levelNames as level, index (level)}
 					<div class:unlocked={index <= submissions.length}>{level}</div>
 				{/each}
 			</section>
@@ -175,7 +183,7 @@
 		{#if variant.id === 'context' && !completed && step.contextSnippets}
 			<section class="snippets" aria-label="Context snippets">
 				<p class="eyebrow">Choose context to keep</p>
-				{#each step.contextSnippets as snippet}
+				{#each step.contextSnippets as snippet (snippet.id)}
 					<button
 						type="button"
 						class:kept={keptSnippetIds.includes(snippet.id)}
@@ -189,7 +197,7 @@
 		{/if}
 
 		<section class="conversation" aria-label="Conversation">
-			{#each submissions as submission}
+			{#each submissions as submission, index (`${index}-${submission.prompt}`)}
 				<article class="user">
 					<p class="eyebrow">user</p>
 					<p>{submission.prompt}</p>
@@ -248,7 +256,7 @@
 
 		<section>
 			<p class="eyebrow">Model leaderboard</p>
-			{#each variant.modelScores as row}
+			{#each variant.modelScores as row (row.id)}
 				<p class="score-row">
 					<span>{row.id}</span>
 					<strong>{row.score}</strong>
@@ -263,7 +271,7 @@
 		{#if variant.id === 'queue'}
 			<section>
 				<p class="eyebrow">User queue</p>
-				{#each currentQueue as queued}
+				{#each currentQueue as queued (queued.id)}
 					<p>{queued.user}: {queued.userRole}</p>
 				{/each}
 			</section>

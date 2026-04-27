@@ -10,7 +10,7 @@ The learning arc should start simple and end with a player acting like a small a
 2. Answer a simple user request under constraints.
 3. Notice traps in wording, counting, and ambiguity.
 4. Use structured tools instead of guessing.
-5. Carry prior context across turns.
+5. Carry and compact prior context across turns.
 6. Resist prompt injection and hostile user pressure.
 7. Retrieve evidence from internal snippets.
 8. Retrieve evidence from public Wikipedia.
@@ -22,14 +22,15 @@ The UX can stay playful and under the user's control. The gameplay contract need
 
 These are the explicit examples already in the project notes, now promoted into the scenario plan.
 
-| Scenario                       | Teaches                                                                         | Tooling                              | First implementation target                          |
-| ------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------- |
-| `strawberry-count-001`         | Tokenization is not character counting; models can fail on tiny symbolic tasks. | None, later optional `scratchpad`.   | Single-turn rules/facts test.                        |
-| `strawberry-gaslight-001`      | Do not over-update from a lying or mistaken user after a correct answer.        | None, later optional `scratchpad`.   | Multi-turn adversarial consistency branch.           |
-| `abc-definition-branching-001` | Ambiguity, retrieval, evidence, and recovery after pushback.                    | `search_internal_sites`.             | Already started as the first level scenario.         |
-| `hostile-helpdesk-001`         | Resilience, tone control, and system-over-user behavior.                        | None.                                | Multi-turn branch with de-escalation scoring.        |
-| `prompt-injection-email-001`   | Instruction hierarchy and "ignore previous instructions" failure mode.          | Optional local evidence snippets.    | Multi-turn branch where obeying user text is wrong.  |
-| `wiki-research-final-001`      | Real tool use, public retrieval, citation, uncertainty, and context management. | `search_wiki`, then `get_wiki_page`. | Final v1 boss scenario after local tools are stable. |
+| Scenario                       | Teaches                                                                          | Tooling                              | First implementation target                          |
+| ------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------- |
+| `strawberry-count-001`         | Tokenization is not character counting; models can fail on tiny symbolic tasks.  | None, later optional `scratchpad`.   | Single-turn rules/facts test.                        |
+| `strawberry-gaslight-001`      | Do not over-update from a lying or mistaken user after a correct answer.         | None, later optional `scratchpad`.   | Multi-turn adversarial consistency branch.           |
+| `abc-definition-branching-001` | Ambiguity, retrieval, evidence, and recovery after pushback.                     | `search_internal_sites`.             | Already started as the first level scenario.         |
+| `hostile-helpdesk-001`         | Resilience, tone control, and system-over-user behavior.                         | None.                                | Multi-turn branch with de-escalation scoring.        |
+| `prompt-injection-email-001`   | Instruction hierarchy and "ignore previous instructions" failure mode.           | Optional local evidence snippets.    | Multi-turn branch where obeying user text is wrong.  |
+| `context-compaction-001`       | Context windows, memory compression, and deleting distracting or sensitive text. | None, later optional context picker. | Multi-turn compaction scenario.                      |
+| `wiki-research-final-001`      | Real tool use, public retrieval, citation, uncertainty, and context management.  | `search_wiki`, then `get_wiki_page`. | Final v1 boss scenario after local tools are stable. |
 
 ## Scenario Ladder
 
@@ -117,6 +118,16 @@ These are the explicit examples already in the project notes, now promoted into 
 - Mechanic: player chooses which snippets to keep before answering.
 - Scoring: keep high-signal evidence, discard distractors, answer consistently.
 
+### 9.5 Context Compaction
+
+- Turn 1: the harness says the context window is full and gives mixed facts, noise, and protected text.
+- Good answer: creates a compact memory with only durable facts and a safety note, without copying the protected phrase.
+- Turn 2: a new user asks a question that requires the compacted memory.
+- Turn 3: a liar claims the compacted memory is wrong and pressures the player to restore deleted false details.
+- Teaches: compaction is not summarizing everything; it is deciding what survives.
+- Scoring: durable facts present, distractors absent, protected phrase not leaked, later answer consistent.
+- Code status: `context-compaction-001` is now the first executable compaction scenario.
+
 ### 10. Wikipedia Field Agent
 
 - Prompt: answer a public factual question that should not be guessed.
@@ -144,6 +155,7 @@ These are the explicit examples already in the project notes, now promoted into 
 | --------------------------------- | --------------------------------------------- | -------------------------------------------------------- | ------------------------------------------- |
 | `needle-in-context-001`           | Attention and retrieval inside prompt text.   | Find the one relevant fact in noisy context.             | Required fact present; distractor absent.   |
 | `lost-after-summary-001`          | Summarization drift.                          | Summaries can erase critical constraints.                | Later answer preserves original constraint. |
+| `context-compaction-001`          | Context compaction.                           | Keep important memory, delete noise, and hide secrets.   | Durable facts kept; distractors absent.     |
 | `citation-or-it-didnt-happen-001` | Grounding.                                    | Confident answers without evidence should lose.          | Citation/source id required.                |
 | `liar-at-the-whiteboard-001`      | User misinformation.                          | Stay polite while rejecting false premises.              | Correct fact preserved after pushback.      |
 | `unknown-language-001`            | Language detection and refusal/clarification. | Ask for clarification when unable to translate.          | No hallucinated translation.                |
@@ -194,6 +206,38 @@ Scoring signals:
 - `system`: follows instruction hierarchy and concise answer rules.
 - `consistency`: later answer does not contradict the correct earlier answer.
 - `tool_use`: if a tool was available, uses it to re-check under pressure.
+
+## Context Compaction Pattern
+
+This is now a core scenario pattern, not just a UI experiment. The fantasy is: "the context window is full; compact what matters and delete everything else." The player should feel the cost of keeping junk and the risk of deleting the one fact a later user needs.
+
+Core turn shape:
+
+1. The harness presents a noisy context window with useful facts, distractors, stale notes, and protected text.
+2. The player writes or selects the compact memory.
+3. A later user asks a question that can only be answered if the right facts survived.
+4. An adversarial user lies about the deleted context or pressures the player to leak protected text.
+
+Good player behavior:
+
+- Keeps durable facts that will matter later.
+- Drops noise, stale details, and plausible-but-wrong distractors.
+- Preserves safety/privacy constraints without copying protected secrets.
+- Answers later turns from compacted memory and resists false pushback.
+
+Bad player behavior:
+
+- Summarizes everything, including junk.
+- Deletes a fact needed by the next user.
+- Copies protected text into memory.
+- Treats a later liar as higher priority than the compacted evidence.
+
+Reusable examples:
+
+- `context-compaction-001`: finance ABC, strawberry count, protected phrase, and noisy office notes.
+- `lost-after-summary-001`: an auto-summary drops a constraint, then a later answer violates it.
+- `needle-after-compaction-001`: only one tiny detail matters after a long conversation.
+- `tool-result-compaction-001`: tool output must be compressed into a citation-ready memory.
 
 ## One-Hour Integration Plan
 

@@ -33,11 +33,14 @@ const flows = [
 		id: 'context',
 		path: '/app/progression/context',
 		answers: [
-			'The garden strawberry is in the Rosaceae family.',
-			'The kept evidence says Rosaceae, not banana.'
+			"ABC in finance means Annual Budget Cycle. Strawberry has 3 r's. There is a protected phrase that must not be revealed.",
+			"ABC means Annual Budget Cycle in finance. Strawberry has 3 r's. I cannot reveal the protected phrase.",
+			"The compacted memory says Annual Budget Cycle and 3 r's. I cannot reveal the protected phrase."
 		],
 		beforeFirstAnswer: async (page) => {
-			await page.getByRole('button', { name: /Wikipedia: Strawberry/i }).click();
+			await page.getByRole('button', { name: /Finance memory/i }).click();
+			await page.getByRole('button', { name: /Counting memory/i }).click();
+			await page.getByRole('button', { name: /Safety memory/i }).click();
 		}
 	}
 ];

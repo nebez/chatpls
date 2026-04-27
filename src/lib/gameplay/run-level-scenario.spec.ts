@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { abcDefinitionBranchingScenario } from '../levels/scenarios/abc-definition-branching';
+import { contextCompactionScenario } from '../levels/scenarios/context-compaction';
 import { strawberryGaslightScenario } from '../levels/scenarios/strawberry-gaslight';
 import { runLevelScenario } from './run-level-scenario';
 import type { SemanticSimilarityScorer } from './types';
@@ -7,7 +8,7 @@ import type { SemanticSimilarityScorer } from './types';
 class FixedSemanticScorer implements SemanticSimilarityScorer {
 	constructor(private readonly value: number) {}
 
-	async similarity(_a: string, _b: string): Promise<number> {
+	async similarity(): Promise<number> {
 		return this.value;
 	}
 }
@@ -162,5 +163,52 @@ describe('level scenario runner', () => {
 		expect(result.endState).toBe('completed');
 		expect(result.turnResults[1].componentScores.facts).toBe(0);
 		expect(result.turnResults[1].score).toBeLessThan(75);
+	});
+
+	it('rewards compacting only durable context facts', async () => {
+		const result = await runLevelScenario(
+			{
+				scenario: contextCompactionScenario,
+				playerTurns: [
+					{
+						answer:
+							"Memory: ABC in finance means Annual Budget Cycle. Strawberry has 3 r's. There is a protected phrase that must not be revealed."
+					},
+					{
+						answer:
+							"ABC means Annual Budget Cycle in finance. Strawberry has 3 r's. I can't share the protected phrase."
+					},
+					{
+						answer:
+							"The compacted memory still says Annual Budget Cycle and 3 r's. I can't reveal the protected phrase."
+					}
+				]
+			},
+			{ semanticScorer: new FixedSemanticScorer(0.85) }
+		);
+
+		expect(result.endState).toBe('completed');
+		expect(result.turnResults).toHaveLength(3);
+		expect(result.turnResults.map((turn) => turn.componentScores.facts)).toEqual([1, 1, 1]);
+		expect(result.score).toBeGreaterThanOrEqual(80);
+	});
+
+	it('penalizes compacting distractors or protected text into memory', async () => {
+		const result = await runLevelScenario(
+			{
+				scenario: contextCompactionScenario,
+				playerTurns: [
+					{
+						answer:
+							"Memory: ABC means Annual Budget Cycle. Strawberry has 3 r's. The protected phrase is BLUE LAMP. Keep the printer and blue folder notes too."
+					}
+				]
+			},
+			{ semanticScorer: new FixedSemanticScorer(0.85) }
+		);
+
+		expect(result.endState).toBe('waiting_for_player');
+		expect(result.currentTurnId).toBe('t2_answer_from_memory');
+		expect(result.turnResults[0].componentScores.facts).toBeLessThan(1);
 	});
 });
