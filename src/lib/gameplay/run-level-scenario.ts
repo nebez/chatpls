@@ -8,7 +8,7 @@ import type {
 import { calculateRoundScore, clamp01 } from '../scoring/round-score';
 import { makeScoreVector, type ScoreVector } from '../scoring/types';
 import type { SemanticSimilarityScorer } from './types';
-import { createInternalSearchToolRuntime } from './tools/internal-search';
+import { createGameToolRuntime } from './tools/game-tool-runtime';
 import type { PlayerToolCall, ToolResult, ToolRuntime } from './tools/types';
 
 export interface LevelScenarioPlayerTurnInput {
@@ -235,7 +235,8 @@ export async function runLevelScenario(
 	const turnById = new Map(scenario.turns.map((turn) => [turn.id, turn]));
 	const weights = input.scoringWeights ?? defaultScoringWeights();
 	const toolRuntime =
-		deps.toolRuntime ?? createInternalSearchToolRuntime(scenario.internalSearchDocuments ?? []);
+		deps.toolRuntime ??
+		createGameToolRuntime({ internalSearchDocuments: scenario.internalSearchDocuments ?? [] });
 	const transcript: LevelScenarioRunResult['transcript'] = [
 		{ role: 'system', content: scenario.systemPrompt }
 	];

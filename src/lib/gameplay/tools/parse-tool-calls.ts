@@ -6,6 +6,8 @@ const TOOL_NAMES: ToolName[] = [
 	'translator',
 	'fact_lookup',
 	'search_internal_sites',
+	'search_wiki',
+	'get_wiki_page',
 	'refuse_unsafe_request'
 ];
 

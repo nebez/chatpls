@@ -234,6 +234,18 @@
 						</p>
 					{:else}
 						<p>{availableTools.join(', ')}</p>
+						{#if hasTool('search_wiki')}
+							<p class="tool-hint">
+								Hard mode:
+								<code>/tool search_wiki {'{"query":"garden strawberry family","limit":2}'}</code>
+							</p>
+						{/if}
+						{#if hasTool('get_wiki_page')}
+							<p class="tool-hint">
+								Page lookup:
+								<code>/tool get_wiki_page {'{"title":"Strawberry"}'}</code>
+							</p>
+						{/if}
 					{/if}
 				</section>
 			{/if}
